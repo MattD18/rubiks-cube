@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{% endblock %}
+
+
+{% block body %}
+<script src="static/js/three.js"></script>
+
+<script src="static/js/orbit.js"></script>
+<script src="static/js/Trackball.js"></script>
+<script src="static/js/environment.js"></script>
+<script src="static/js/game.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+        $(function() {
+          $('.moveButton').bind('click', function() {
+            $.getJSON('/background_process', {
+               move: $(this).val()
+            },
+                function(data) {
+            });
+        return false;
+      });
+    });
+</script>
+<script type=text/javascript>
+        $(function() {
+          $('#Solve').bind('click', function() {
+            $.ajax({
+              url: '/cube_solving',
+              type : 'GET',
+              success : function(response){
+                var parsed_moves = JSON.parse(response)['moves']
+                console.log(parsed_moves)
+                for (i = 0; i < parsed_moves.length; i++) {
+                  move = parsed_moves[i];
+                  console.log(move);
+                  if (move == "up") {
+                    up();
+                  } else if (move == "up_p") {
+                    up_inv();
+                  } if (move == "down") {
+                    down();
+                  } else if (move == "down_p") {
+                    down_inv();
+                  } if (move == "left") {
+                    left();
+                  } else if (move == "left_p") {
+                    left_inv();
+                  } if (move == "right") {
+                    right();
+                  } else if (move == "right_p") {
+                    right_inv();
+                  } if (move == "front") {
+                    front();
+                  } else if (move == "front_p") {
+                    front_inv();
+                  } if (move == "back") {
+                    back();
+                  } else if (move == "back_p") {
+                    back_inv();
+                  };
+                 }
+              }
+            });
+
+        return false;
+      });
+    });
+</script>
+
+
+<div>
+
+
+
+
+  <form>
+     <input style="position: absolute;
+         top: 0px;
+         left: 0px;"
+         id="Solve"
+         type="submit"
+         value="Solve"/>
+  </form>
+
+
+
+
+  <form>
+     <input style="position: absolute;
+         top: 0px;
+         left: 150px;"
+         id="Up"
+         class="moveButton"
+         onclick="up()" type="submit" value="Up"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 0px; left: 300px;"
+            id="Up_p"
+            class="moveButton"
+            onclick="up_inv()"
+            type="submit"
+            value="Up_p"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 0px; left: 450px;"
+            id="Down"
+            class="moveButton"
+            onclick="down()"
+            type="submit"
+            value="Down"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 0px; left: 600px;"
+            id="Down_p"
+            class="moveButton"
+            onclick="down_inv()"
+            type="submit"
+            value="Down_p"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 0px; left: 750px;"
+            id="Left"
+            class="moveButton"
+            onclick="left()"
+            type="submit"
+            value="Left"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 0px; left: 900px;"
+            id="Left_p"
+            class="moveButton"
+            onclick="left_inv()"
+            type="submit"
+            value="Left_p"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 50px; left: 150px;"
+            id="Right"
+            class="moveButton"
+            onclick="right()"
+            type="submit"
+            value="Right"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 50px; left: 300px;"
+            id="Right_p"
+            class="moveButton"
+            onclick="right_inv()"
+            type="submit"
+            value="Right_p"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 50px; left: 450px;"
+            id="Front"
+            class="moveButton"
+            onclick="front()"
+            type="submit"
+            value="Front"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 50px; left: 600px;"
+            id="Front_p"
+            class="moveButton"
+            onclick="front_inv()"
+            type="submit"
+            value="Front_p"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 50px; left: 750px;"
+            id="Back"
+            class="moveButton"
+            onclick="back()"
+            type="submit"
+            value="Back"/>
+  </form>
+
+  <form>
+     <input style="position: absolute; top: 50px; left: 900px;"
+            id="Back_p"
+            class="moveButton"
+            onclick="back_inv()"
+            type="submit"
+            value="Back_p"/>
+  </form>
+
+
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+body {
+  margin: 20;
+  font-family: sans-serif;
+  font-size: 10;
+  color: red;
+
+}
+
+
+input {
+  margin: 10px;
+  width: 100px;
+  height: 30px;
+  background-color: dimgrey;
+  color: white;
+  font-size: 20px;
+  border-radius: 7px;
+}
