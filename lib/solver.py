@@ -48,6 +48,7 @@ class CubeSolver():
               batch_size=64,
               discount_factor=.95,
               validation_count=100,
+              val_step=100,
               train_log_name=None,
               stop_on_solve=False):
         '''
@@ -82,6 +83,8 @@ class CubeSolver():
             discount applied to future values in Q function
         validation_count : int
             number of cubes to use for validating during training
+        val_step : int
+            number of steps to go before validation step
         train_log_name : str
             optional name for training log, defaults to timestamp
         stop_on_solve : bool
@@ -180,10 +183,10 @@ class CubeSolver():
                 tf.summary.scalar('loss', train_loss.result(), step=episode)
             train_loss.reset_states()
 
-            #every 25 episodes, save val accuracy and average max q val, which
+            #every val_step episodes, save val accuracy and average max q val, which
             #is an indicator of training progress as described in
             #https://arxiv.org/pdf/1312.5602v1.pdf section 5.1
-            if episode % 25 == 0:
+            if episode % val_step == 0:
 
                 avg_max_q = np.mean([self.model( \
                                      tf.expand_dims(tf.convert_to_tensor(val_cube.state), 0)) \
