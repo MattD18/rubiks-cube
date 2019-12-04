@@ -29,7 +29,7 @@ with app.app_context():
                        num_filters=50,
                        kernel_size=(2, 2, 2),
                        regularization_constant=.1)
-    SOLVER.load_model_weights('data/models/3_shuffle_large_run/weights')
+    SOLVER.load_model_weights('models/base_model_v2_20191818170141/weights')
 
 
 @app.route("/", methods=['GET'])

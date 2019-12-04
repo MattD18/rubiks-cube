@@ -50,6 +50,7 @@ class CubeSolver():
               validation_count=100,
               val_step=100,
               train_log_name=None,
+              logging=True,
               stop_on_solve=False):
         '''
         Trains Q function approximator
@@ -87,6 +88,8 @@ class CubeSolver():
             number of steps to go before validation step
         train_log_name : str
             optional name for training log, defaults to timestamp
+        logging : bool
+            boolean to determine if training metrics should be logged
         stop_on_solve : bool
             training episodes will terminate if cube is solved
         '''
@@ -159,7 +162,7 @@ class CubeSolver():
                     rewards = tf.convert_to_tensor(rewards)
                     #perform update
                     with tf.GradientTape() as tape:
-                        rows = self.model(tf.squeeze(tf.stack(states, 1), 0))
+                        rows = self.model(tf.squeeze(tf.stack(states, 1), 0), training=True)
                         selector = tf.expand_dims(actions, 1)
                         idx = tf.stack([tf.reshape(tf.range(rows.shape[0]), (-1, 1)), selector], axis=-1)
                         predicted_q_vals = tf.gather_nd(rows, idx)
@@ -171,38 +174,40 @@ class CubeSolver():
                     try:
                         optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
                     except ValueError:
-                        import pdb;pdb.set_trace()
+                        # import pdb;pdb.set_trace()
+                        print("Gradient Error")
                     train_loss(loss)
                 st = tf.convert_to_tensor(st1)
                 st = tf.expand_dims(st, 0)
                 if (rt == end_state_reward) and stop_on_solve:
                     break
 
-            #evey episode, save training loss and reset loss counter
-            with train_summary_writer.as_default():
-                tf.summary.scalar('loss', train_loss.result(), step=episode)
-            train_loss.reset_states()
-
-            #every val_step episodes, save val accuracy and average max q val, which
-            #is an indicator of training progress as described in
-            #https://arxiv.org/pdf/1312.5602v1.pdf section 5.1
-            if episode % val_step == 0:
-
-                avg_max_q = np.mean([self.model( \
-                                     tf.expand_dims(tf.convert_to_tensor(val_cube.state), 0)) \
-                                     .numpy() \
-                                     .max() for val_cube in validation_cubes])
+            if logging:
+                #evey episode, save training loss and reset loss counter
                 with train_summary_writer.as_default():
-                    tf.summary.scalar('avg_max_q', avg_max_q, step=episode)
+                    tf.summary.scalar('loss', train_loss.result(), step=episode)
+                train_loss.reset_states()
 
-                solve_count = 0
-                for val_trial in range(validation_count):
-                    val_trial_cube = Cube()
-                    val_trial_cube.shuffle(num_shuffles)
-                    solve_count += self.solve(val_trial_cube, max_time_steps)[0]
-                val_acc = float(solve_count) / float(validation_count)
-                with train_summary_writer.as_default():
-                    tf.summary.scalar('val_acc', val_acc, step=episode)
+                #every val_step episodes, save val accuracy and average max q val, which
+                #is an indicator of training progress as described in
+                #https://arxiv.org/pdf/1312.5602v1.pdf section 5.1
+                if episode % val_step == 0:
+
+                    avg_max_q = np.mean([self.model( \
+                                         tf.expand_dims(tf.convert_to_tensor(val_cube.state), 0)) \
+                                         .numpy() \
+                                         .max() for val_cube in validation_cubes])
+                    with train_summary_writer.as_default():
+                        tf.summary.scalar('avg_max_q', avg_max_q, step=episode)
+
+                    solve_count = 0
+                    for val_trial in range(validation_count):
+                        val_trial_cube = Cube()
+                        val_trial_cube.shuffle(num_shuffles)
+                        solve_count += self.solve(val_trial_cube, max_time_steps)[0]
+                    val_acc = float(solve_count) / float(validation_count)
+                    with train_summary_writer.as_default():
+                        tf.summary.scalar('val_acc', val_acc, step=episode)
 
     def get_reinforce_q_vals(self, batch, discount_factor):
         '''

@@ -107,3 +107,11 @@ class Cube():
             if verbose:
                 print(move)
         return copy.deepcopy(self.state)
+
+    def set_state(self, new_state):
+        '''
+        sets state of cube as a copy of new_state param
+
+        PreC: new_state is a valid cube state np.array
+        '''
+        self.state = copy.deepcopy(new_state)
