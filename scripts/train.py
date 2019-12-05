@@ -6,7 +6,6 @@ sys.path.append('..')
 
 import numpy as np
 import tensorflow as tf
-from tensorboard.plugins.hparams import api as hp
 
 from lib.cube import Cube
 from lib.solver import CubeSolver
