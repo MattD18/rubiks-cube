@@ -51,6 +51,7 @@ class CubeSolver():
               val_step=100,
               train_log_name=None,
               logging=True,
+              checkpointing=False,
               stop_on_solve=False):
         '''
         Trains Q function approximator
@@ -90,6 +91,8 @@ class CubeSolver():
             optional name for training log, defaults to timestamp
         logging : bool
             boolean to determine if training metrics should be logged
+        checkpointing : bool
+            boolean to determine if weights should be checkpointed
         stop_on_solve : bool
             training episodes will terminate if cube is solved
         '''
@@ -208,6 +211,9 @@ class CubeSolver():
                     val_acc = float(solve_count) / float(validation_count)
                     with train_summary_writer.as_default():
                         tf.summary.scalar('val_acc', val_acc, step=episode)
+
+                    if checkpointing:
+                        self.save_model_weights(train_log_name)
 
     def get_reinforce_q_vals(self, batch, discount_factor):
         '''
