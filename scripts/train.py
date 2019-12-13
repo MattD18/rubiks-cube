@@ -38,19 +38,19 @@ config['model_params'] = {'embed_dim':100,
                           'conv_activation':'elu'}
 
 config['training_params'] = {'exploration_rate_func':linear_decay_constant,
-                             'num_shuffles':2,
-                             'num_episodes':1000,
+                             'num_shuffles':7,
+                             'num_episodes':50000,
                              'max_time_steps':10,
                              'epsilon':.1,
-                             'decay_constant':100,
+                             'decay_constant':5000,
                              'end_state_reward':1,
-                             'replay_buffer_capacity':64,
-                             'learning_rate':0.0001,
+                             'replay_buffer_capacity':512,
+                             'learning_rate':0.00001,
                              'clipnorm':0,
-                             'batch_size':16,
+                             'batch_size':128,
                              'discount_factor':.9,
                              'validation_count':400,
-                             'val_step':50,
+                             'val_step':500,
                              'train_log_name':session_name,
                              'logging':True,
                              'checkpointing':True,
@@ -60,6 +60,7 @@ if __name__ == "__main__":
 
     solver = CubeSolver()
     solver.model = CNN(**config['model_params'])
+    solver.load_model_weights('../models/base_model_v2_20191208165135/weights')
     solver.train(**config['training_params'])
     solver.save_model_weights(weights_dir_name=session_name)
     with open(config_save_path ,'wb') as f:
