@@ -15,7 +15,7 @@ from lib.utils import linear_decay_constant, exponential_decay, constant_rate
 
 ### BASELINE ARCHITECTURE ###
 ## TODO: pass baseline config in as argument
-now = datetime.datetime.now().strftime("%Y%d%d%H%M%S")
+now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 session_name = 'base_model_v2_{}'.format(now)
 
 
@@ -53,6 +53,7 @@ config['training_params'] = {'exploration_rate_func':linear_decay_constant,
                              'val_step':50,
                              'train_log_name':session_name,
                              'logging':True,
+                             'checkpointing':True,
                              'stop_on_solve':True}
 
 if __name__ == "__main__":
