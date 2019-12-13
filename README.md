@@ -5,5 +5,5 @@ This repo trains an agent to attempt to solve a Rubix Cube using a variant of de
 
 ### Part 1: Problem Set-Up and Deep Q-Learning ([link](notebooks/intro.ipynb))
 
-### Part 2: Adding Monte-Carlo Search Tree and GPU Training via Amazon EC2
+### Part 2: Adding Monte-Carlo Tree Search and GPU Training via Amazon EC2
 
