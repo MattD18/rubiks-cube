@@ -125,10 +125,13 @@ class CubeSolver():
         #initialize replay memory
         replay_buffer = [None for i in range(replay_buffer_capacity)]
         replay_counter = -1
-        episode_num_shuffles = num_shuffles
-        if vary_shuffle:
-            episode_num_shuffles = np.random.randint(1,num_shuffles+1)
         for episode in range(num_episodes):
+            #set-up episode
+            episode_num_shuffles = num_shuffles
+            episode_max_time_steps = max_time_steps
+            if vary_shuffle:
+                episode_num_shuffles = np.round(1 + np.random.beta(1, 2)*(num_shuffles-1)).astype(int)
+                episode_max_time_steps = episode_num_shuffles + 5
             #set exploration rate for episode
             exploration_rate = exploration_rate_func(epsilon, decay_constant, episode)
             #Initialize sequence s_1
@@ -136,7 +139,7 @@ class CubeSolver():
             s1 = episode_cube.shuffle(episode_num_shuffles)
             st = tf.convert_to_tensor(s1)
             st = tf.expand_dims(st, 0)
-            for time_step in range(max_time_steps):
+            for time_step in range(episode_max_time_steps):
                 #with some probability select a random action a_t
                 if np.random.rand() < exploration_rate:
                     at_index = np.random.randint(0, num_actions)
