@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from lib.cube import Cube
 from lib.solver import CubeSolver
-from lib.models import CNN
+from lib.models import WideNet
 from lib.utils import linear_decay_constant, exponential_decay, constant_rate
 
 
@@ -28,39 +28,34 @@ config_save_path = os.path.join(logs_base_dir,
 config = {}
 
 
-config['model_params'] = {'embed_dim':100,
-                          'num_filters':50,
-                          'num_conv_layers':3,
-                          'kernel_size':2,
-                          'regularization_constant':.05,
-                          'num_dense_layers':3,
-                          'dense_activation':'elu',
-                          'conv_activation':'elu'}
+config['model_params'] = {'regularization_constant':.05}
 
 config['training_params'] = {'exploration_rate_func':linear_decay_constant,
-                             'num_shuffles':7,
-                             'num_episodes':50000,
-                             'max_time_steps':10,
+                             'num_shuffles':15,
+                             'num_episodes':100000,
+                             'max_time_steps':20,
                              'epsilon':.1,
-                             'decay_constant':5000,
+                             'decay_constant':10000,
                              'end_state_reward':1,
-                             'replay_buffer_capacity':512,
-                             'learning_rate':0.00001,
+                             'replay_buffer_capacity':1024,
+                             'learning_rate':0.0001,
                              'clipnorm':0,
-                             'batch_size':128,
+                             'batch_size':64,
                              'discount_factor':.9,
-                             'validation_count':400,
+                             'validation_count':500,
                              'val_step':500,
+                             'vary_shuffle':True,
+                             'val_shuffles':7,
                              'train_log_name':session_name,
                              'logging':True,
                              'checkpointing':True,
                              'stop_on_solve':True}
 
+
 if __name__ == "__main__":
 
     solver = CubeSolver()
-    solver.model = CNN(**config['model_params'])
-    solver.load_model_weights('../models/base_model_v2_20191208165135/weights')
+    solver.model = WideNet(**config['model_params'])
     solver.train(**config['training_params'])
     solver.save_model_weights(weights_dir_name=session_name)
     with open(config_save_path ,'wb') as f:

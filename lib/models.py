@@ -233,3 +233,91 @@ class CNNWithBatchNorm(tf.keras.Model):
         x = self.fc(x, training)
         x = self.output_layer(x)
         return x
+
+class WideNet(tf.keras.Model):
+    '''
+    Parameters:
+    -----------
+    regularization_constant : float
+        lambda for l2 regularization in fully connected layer, used to mitigate
+        overfitting to replay buffer during each episode of training
+
+    Attributes (Needs Updating):
+    -----------
+    embedding : tf.keras.layers.Embedding
+        embedding layer to map each cube piece id
+    cnn : tf.keras.layers.Conv3d
+        convolutional layer
+    flatten : tf.keras.layers.Flatten
+        flatten convolution output into one long vector
+    fc : tf.keras.layers.Dense
+        fully connected layer w/ output dimension equal to number of cube moves
+    lr : tf.keras.layers.LeakyReLU
+        activation layer for self.fc, chosen to avoid dying relu issue
+
+    '''
+    def __init__(self,
+                 regularization_constant=0):
+        super(WideNet, self).__init__()
+
+        self.rc = regularization_constant
+        self.embedding = tf.keras.layers.Embedding(27, 256)
+        self.cnn = self._build_conv_layer()
+        self.flatten = tf.keras.layers.Flatten()
+        self.fc = self._build_fc_layers()
+        self.output_layer = tf.keras.layers.Dense(12,
+                                            activation='elu',
+                                            kernel_regularizer=tf.keras.regularizers.l2(l=self.rc),
+                                            bias_regularizer=tf.keras.regularizers.l2(l=self.rc))
+
+    def _build_conv_layer(self):
+        '''
+        helper function for init
+        '''
+        cnn = tf.keras.Sequential()
+        cnn_layer = tf.keras.layers.Conv3D(filters=128,
+                                           kernel_size=3,
+                                           data_format='channels_last',
+                                           padding = 'same',
+                                           activation=None)
+        activation = tf.keras.layers.ELU()
+        cnn.add(cnn_layer)
+        cnn.add(activation)
+        return cnn
+
+
+    def _build_fc_layers(self):
+        '''
+        helper function for init
+        '''
+        fc = tf.keras.Sequential()
+
+        fc_1 = tf.keras.layers.Dense(1024,
+                                     kernel_regularizer=tf.keras.regularizers.l2(l=self.rc),
+                                     bias_regularizer=tf.keras.regularizers.l2(l=self.rc),
+                                     activation='elu')
+        fc_2 = tf.keras.layers.Dense(512,
+                                     kernel_regularizer=tf.keras.regularizers.l2(l=self.rc),
+                                     bias_regularizer=tf.keras.regularizers.l2(l=self.rc),
+                                     activation='elu')
+        fc.add(fc_1)
+        fc.add(fc_2)
+        fc.add(fc_3)
+        return fc
+
+
+    def call(self, x, training=False):
+        '''
+        Forward pass for CNN
+
+        Parameters:
+        -----------
+        x : tensorflow.python.framework.ops.EagerTensor
+            shape is (batch_size, 3, 3, 3) representing rubix cube
+        '''
+        x = self.embedding(x)
+        x = self.cnn(x, training)
+        x = self.flatten(x)
+        x = self.fc(x, training)
+        x = self.output_layer(x)
+        return x

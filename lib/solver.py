@@ -49,6 +49,8 @@ class CubeSolver():
               discount_factor=.95,
               validation_count=100,
               val_step=100,
+              vary_shuffle=False,
+              val_shuffles = None,
               train_log_name=None,
               logging=True,
               checkpointing=False,
@@ -123,13 +125,15 @@ class CubeSolver():
         #initialize replay memory
         replay_buffer = [None for i in range(replay_buffer_capacity)]
         replay_counter = -1
-
+        episode_num_shuffles = num_shuffles
+        if vary_shuffle:
+            episode_num_shuffles = np.random.randint(1,num_shuffles+1)
         for episode in range(num_episodes):
             #set exploration rate for episode
             exploration_rate = exploration_rate_func(epsilon, decay_constant, episode)
             #Initialize sequence s_1
             episode_cube = Cube()
-            s1 = episode_cube.shuffle(num_shuffles)
+            s1 = episode_cube.shuffle(episode_num_shuffles)
             st = tf.convert_to_tensor(s1)
             st = tf.expand_dims(st, 0)
             for time_step in range(max_time_steps):
@@ -204,9 +208,12 @@ class CubeSolver():
                         tf.summary.scalar('avg_max_q', avg_max_q, step=episode)
 
                     solve_count = 0
+                    val_num_shuffles = num_shuffles
+                    if val_shuffles:
+                        val_num_shuffles = val_shuffles
                     for val_trial in range(validation_count):
                         val_trial_cube = Cube()
-                        val_trial_cube.shuffle(num_shuffles)
+                        val_trial_cube.shuffle(val_num_shuffles)
                         solve_count += self.solve(val_trial_cube, max_time_steps)[0]
                     val_acc = float(solve_count) / float(validation_count)
                     with train_summary_writer.as_default():
