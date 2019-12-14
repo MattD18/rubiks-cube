@@ -28,7 +28,7 @@ config_save_path = os.path.join(logs_base_dir,
 config = {}
 
 
-config['model_params'] = {'regularization_constant':.05}
+config['model_params'] = {'regularization_constant':.1}
 
 config['training_params'] = {'exploration_rate_func':linear_decay_constant,
                              'num_shuffles':15,
@@ -38,7 +38,7 @@ config['training_params'] = {'exploration_rate_func':linear_decay_constant,
                              'decay_constant':10000,
                              'end_state_reward':1,
                              'replay_buffer_capacity':1024,
-                             'learning_rate':0.0001,
+                             'learning_rate':0.00001,
                              'clipnorm':0,
                              'batch_size':64,
                              'discount_factor':.9,
