@@ -302,7 +302,6 @@ class WideNet(tf.keras.Model):
                                      activation='elu')
         fc.add(fc_1)
         fc.add(fc_2)
-        fc.add(fc_3)
         return fc
 
 
