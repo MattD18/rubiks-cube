@@ -38,7 +38,7 @@ config['training_params'] = {'exploration_rate_func':linear_decay_constant,
                              'decay_constant':10000,
                              'end_state_reward':1,
                              'replay_buffer_capacity':1024,
-                             'learning_rate':0.000005,
+                             'learning_rate':0.000001,
                              'clipnorm':0,
                              'batch_size':128,
                              'discount_factor':.9,
@@ -56,6 +56,8 @@ if __name__ == "__main__":
 
     solver = CubeSolver()
     solver.model = WideNet(**config['model_params'])
+    model_path = '../models/base_model_v2_20191214134359/weights'
+    solver.load_model_weights(model_path)
     solver.train(**config['training_params'])
     solver.save_model_weights(weights_dir_name=session_name)
     with open(config_save_path ,'wb') as f:
