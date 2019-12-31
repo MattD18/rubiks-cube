@@ -1,10 +1,10 @@
 import sys
 import datetime
 import time
+import csv
 sys.path.append('..')
 
 
-import pandas as pd
 import numpy as np
 
 
@@ -22,12 +22,6 @@ config['model_params'] = {'regularization_constant': 0.05}
 model = WideNet(**config['model_params'])
 solver = MCTS(model)
 
-results_df = pd.DataFrame(columns = ['model_path','timestamp','num_shuffles',
-                                     'n_trials', 'c', 'v', 'n_searches',
-                                     'avg_solve_time', 'avg_not_solve_time',
-                                     'avg_overall_time', 'solve_rate'])
-
-
 model_path = '../models/base_model_v2_20191224023143/weights'
 
 solver.load_model_weights(model_path)
@@ -35,8 +29,8 @@ n_trials = 100
 
 if __name__ == "__main__":
     
-    for n_shuffles in [1000]:
-        for ns in [30000]:
+    for n_shuffles in [10]:
+        for ns in [10]:
             for c in [.1]:
                 for v in [.1]:
                     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -58,7 +52,7 @@ if __name__ == "__main__":
                     avg_solve_time = np.mean(solved_times)    
                     avg_not_solve_time = np.mean(not_solved_times)   
                     avg_overall_time = np.mean(solved_times + not_solved_times)
-                    results_df = results_df.append({'model_path':model_path, 
+                    results = {'model_path':model_path, 
                                     'timestamp':timestamp,
                                     'num_shuffles':n_shuffles,
                                     'n_trials':n_trials,
@@ -68,7 +62,14 @@ if __name__ == "__main__":
                                     'avg_solve_time':avg_solve_time,
                                     'avg_not_solve_time':avg_not_solve_time,
                                     'avg_overall_time':avg_overall_time,
-                                    'solve_rate':solve_rate}, ignore_index=True)
+                                    'solve_rate':solve_rate}
     
     now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    results_df.to_csv(f'../data/mcts_results_{now}.csv',index=False)
+    save_path = f'../data/mcts_results_{now}.csv'
+
+
+    with open(save_path, 'w') as f:
+        for key in results.keys():
+            f.write("%s,%s\n"%(key,results[key]))
+
+   
