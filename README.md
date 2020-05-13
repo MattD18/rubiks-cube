@@ -7,3 +7,24 @@ This repo documents my work to train an agent to solve a Rubik's cube using a va
 
 ### Part 2: Adding Monte-Carlo Tree Search and GPU Training via Amazon EC2 ([link](notebooks/Part%202.ipynb))
 
+
+
+Project Structure:
+
+-RubiksCube
+    -main_train.py
+        -include validation method
+    -training
+        -experience_replay.py
+    -environment
+        -cube.py
+    -q_function
+        -small_cnn.py
+    -inference
+        -mcts.py
+        -greedy.py
+-notebooks
+-saved_weights
+-training_log
+    -gradient_tape
+-train.sh
