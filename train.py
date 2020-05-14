@@ -23,4 +23,5 @@ if __name__ == "__main__":
         print("Training got interrupted")
 
     #add model saving/config system
+    # config helpers
     #gpu/ container
