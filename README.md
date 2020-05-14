@@ -28,3 +28,7 @@ Project Structure:
 -training_log
     -gradient_tape
 -train.sh
+
+TO DO List:
+
+Set up training main + logging

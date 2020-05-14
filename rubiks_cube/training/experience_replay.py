@@ -1,33 +1,64 @@
 ''' Experience replay algorithm as described in
 Algorithm 1 of https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf
 '''
+import os
+import datetime
+
 import numpy as np
 import tensorflow as tf
 
 from rubiks_cube.environment.cube import Cube
 from rubiks_cube.agent.replay_buffer import ReplayBuffer
+from rubiks_cube.inference.greedy import greedy_solve
 
 def train_via_experience_replay(model, loss_object, optimizer, 
-                                num_epochs=10, 
+                                num_episodes=20, 
                                 buffer_size=128,
+                                train_log_dir='logs/training/gradient_tape',
+                                logging=False,
+                                logging_freq=5,
                                 **episode_kwargs):
     '''
     Wrapper function to train model
+
+    TO DO: Implement model checkpointing
 
     Parameters:
     -----------
     model : tf.keras.Model
     loss_object : tf.keras.losses
     optimizer : tf.keras.optimizer
-    num_epochs : int
+    num_episodes : int
     buffer_size : int
+    train_log_dir : str
+    logging : boolean
+    logging_freq : int
     **episode_kwargs : keyword arguments to play_episde
     '''
+    #set up training performance variables
+    if logging:
+        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        train_log_dir = os.path.join(train_log_dir, current_time)
+        train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+        validation_cubes = get_validation_cubes()
+
     print("Training model")
     rb = ReplayBuffer(buffer_size=buffer_size)
-    for i in range(num_epochs):
-        play_episode(model, loss_object, optimizer, rb, **episode_kwargs)
-
+    for episode in range(num_episodes):
+        print(f"Episode: {episode}")
+        _, episode_loss = play_episode(model, loss_object, optimizer, rb, **episode_kwargs)
+        if logging:
+            # write training loss
+            with train_summary_writer.as_default():
+                tf.summary.scalar('loss', episode_loss, step=episode)
+            # perform validation assessments and write results
+            if (episode % logging_freq) == 0:
+                avg_max_q = get_val_avg_max_q(model, validation_cubes)
+                val_acc = get_val_acc(model, validation_cubes, **episode_kwargs) #episode kwargs just for max_time_steps
+                with train_summary_writer.as_default():
+                    tf.summary.scalar('avg_max_q', avg_max_q, step=episode)
+                    tf.summary.scalar('val_acc', val_acc, step=episode)
+    
 
 def play_episode(model, loss_object, optimizer, replay_buffer, 
                     num_shuffles=5, 
@@ -54,6 +85,8 @@ def play_episode(model, loss_object, optimizer, replay_buffer,
     discount_factor: float
     training : boolean
     '''
+    #Set up training episode loss
+    episode_loss = tf.keras.metrics.Mean()
     #Initialize cube state
     cube = Cube()
     solved_cube = Cube()
@@ -81,13 +114,16 @@ def play_episode(model, loss_object, optimizer, replay_buffer,
         replay_buffer.add(transition)
         #if training is enabled, update q function
         if training:
-            update_q_function(model, loss_object, optimizer, replay_buffer, end_state_reward, batch_size, discount_factor)
+            loss = update_q_function(model, loss_object, optimizer, replay_buffer, end_state_reward, batch_size, discount_factor)
+        else:
+            loss = 0
+        episode_loss(loss)
         #if reward state has been reached, stop episode early
         if (rt == end_state_reward):
             break
         # convert next cube state into tensor to feed into model
         st = tf.expand_dims(tf.convert_to_tensor(st1), 0) # (1, 3, 3, 3)
-    return cube
+    return cube, episode_loss.result()
 
 def update_q_function(model, loss_object, optimizer, replay_buffer, end_state_reward, batch_size=16, discount_factor=.9):
     '''
@@ -101,23 +137,25 @@ def update_q_function(model, loss_object, optimizer, replay_buffer, end_state_re
     batch_size : int (>= 1)
     discount_factor: float
     '''
+    loss = 0
     if replay_buffer.is_full():
         #grab batch values from replay buffer
         minibatch = replay_buffer.get_minibatch(batch_size)
         states, actions, rewards, next_states = unpack_minibatch(minibatch)
         #perform update
         with tf.GradientTape() as tape:
+            # select max predicted q value out of 12 actions
             rows = model(states, training=True)
             selector = tf.expand_dims(actions, 1)
             idx = tf.stack([tf.reshape(tf.range(rows.shape[0]), (-1, 1)), selector], axis=-1)
             predicted_q_vals = tf.gather_nd(rows, idx) # (bs, 1)
+            # get y_vals
             y_vals = get_y_vals(rewards, next_states, model, discount_factor, end_state_reward) #(bs, 1)
             loss = loss_object(y_vals, predicted_q_vals)
-
+        #perform gradient step
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-
+    return loss
 
 def get_y_vals(rewards, next_states, model, discount_factor, end_state_reward):
         '''
@@ -146,8 +184,6 @@ def get_y_vals(rewards, next_states, model, discount_factor, end_state_reward):
         return y_vals
 
 
-
-
 def unpack_minibatch(minibatch):
     '''
     unpacks minibatch into tensors for gradient update
@@ -163,3 +199,74 @@ def unpack_minibatch(minibatch):
     next_states = tf.stack([transition[3] for transition in minibatch], 0) # (bs, 3, 3, 3)
     return states, actions, rewards, next_states
 
+
+def get_val_acc(model, validation_cubes, max_time_steps=5):
+    '''
+    Assess training progress on ability to solve validation cubes
+
+    Parameters:
+    -------------
+    model : tf.keras.Model
+    validation_cubes : list
+        list of rubiks_cube.environment.cube.Cube() objects
+    max_time_steps : int
+    Returns:
+    ----------
+    val_acc : float
+    '''
+    solve_count = 0
+    for val_cube in validation_cubes:
+        val_cube_trial = Cube()
+        val_cube_trial.state = np.copy(val_cube.state)
+        solve_count += greedy_solve(model, val_cube_trial, max_time_steps)[0]
+    return solve_count / len(validation_cubes)
+  
+
+def get_val_avg_max_q(model, validation_cubes):
+    '''
+    One measure to assess training progress in
+    Playing Atari with Deep Reinforcement Learning is
+    the avg maximum Q over all actions in any given state.
+
+    Paper examines improvement over fixed set of states,
+    reflected here by validaiton_cubes
+
+    Parameters:
+    ----------
+    model : tf.keras.model
+    validation_cubes : list
+        list of rubiks_cube.environment.cube.Cube() objects
+
+    Returns:
+    --------
+    avg_max_q : float
+    '''
+    avg_max_q = np.mean([
+        model(
+            tf.expand_dims(tf.convert_to_tensor(val_cube.state), 0)
+        ).numpy().max() for val_cube in validation_cubes
+    ])
+    return avg_max_q
+
+def get_validation_cubes(val_shuffles=3, validation_count=100):
+    '''
+    Get set of validation cubes that will remain consistent over training period
+
+    Parameters:
+    ------------
+    val_shuffles : int
+        number of times validation cube is shuffled
+    validation_count : int
+        number of validation cubes
+
+    Returns:
+    ---------
+    validation_cubes : list
+        list of rubiks_cube.environment.cube.Cube() objects
+    '''
+    validation_cubes = []
+    for i in range(validation_count):
+        val_cube = Cube()
+        val_cube.shuffle(val_shuffles)
+        validation_cubes.append(val_cube)
+    return validation_cubes

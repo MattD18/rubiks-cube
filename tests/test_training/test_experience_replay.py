@@ -7,9 +7,8 @@ import tensorflow as tf
 from rubiks_cube.agent.small_cnn import CNN
 from rubiks_cube.agent.replay_buffer import ReplayBuffer
 from rubiks_cube.training.experience_replay import play_episode, unpack_minibatch, get_y_vals, update_q_function
-from rubiks_cube.training.experience_replay import train_via_experience_replay
+from rubiks_cube.training.experience_replay import train_via_experience_replay, get_validation_cubes, get_val_avg_max_q, get_val_acc
 from rubiks_cube.environment.cube import Cube
-
 from rubiks_cube.agent import replay_buffer
 
 
@@ -21,7 +20,7 @@ def test_experience_replay_play_episode():
     loss_object = tf.keras.losses.MeanSquaredError()
     optimizer = tf.keras.optimizers.Adam()
     rb = replay_buffer.ReplayBuffer()
-    cube = play_episode(model, loss_object, optimizer, rb, training=False)
+    cube, _ = play_episode(model, loss_object, optimizer, rb, training=False)
     assert (cube.state == np.array([[[26, 15,  0],
                                     [ 3,  4, 11],
                                     [ 8, 25, 18]],
@@ -88,7 +87,7 @@ def test_train_via_experience_replay_change_weights():
     model.build(input_shape=tf.TensorShape([4, 3, 3, 3]))
     before_update_vars = [tf.identity(var) for var in model.trainable_variables]
     train_via_experience_replay(model, loss_object, optimizer,
-                                num_epochs=5, buffer_size=4,
+                                num_episodes=5, buffer_size=4,
                                 num_shuffles=1, 
                                 max_time_steps=5, 
                                 exploration_rate=.1, 
@@ -99,3 +98,24 @@ def test_train_via_experience_replay_change_weights():
     after_update_vars = model.trainable_variables
     for (b,a) in zip(before_update_vars, after_update_vars):
         assert (a != b).numpy().any()
+
+
+def test_get_validation_cubes():
+    validation_cubes = get_validation_cubes(val_shuffles=1, validation_count=10)
+    assert (len(validation_cubes) == 10) \
+        & (type(validation_cubes[0]) == Cube) \
+        & ~(validation_cubes[0].state == Cube().state).all()
+
+
+def test_get_val_avg_max_q():
+    model = CNN()
+    validation_cubes = get_validation_cubes(val_shuffles=1, validation_count=10)
+    avg_max_q = get_val_avg_max_q(model, validation_cubes)
+    assert type(avg_max_q) is np.float32
+
+def test_get_val_acc():
+    model = CNN()
+    validation_cubes = get_validation_cubes(val_shuffles=1, validation_count=10)
+    val_acc = get_val_acc(model, validation_cubes, max_time_steps=5)
+    assert type(val_acc) is float
+   
