@@ -11,13 +11,32 @@ optimizer:
   params:
     name: Adam
     learning_rate: .00001
+model:
+  params:
+    name: small_cnn
+    embed_dim : 50
+    num_filters : 20
+    num_conv_layers : 1
+    kernel_size : 2
+    fc_dim : 50
+    regularization_constant : 0.0
+    num_dense_layers : 1
+    dense_activation : elu
+    conv_activation : elu
 # Float Params
 float_params:
   - learning_rate
   - exploration_rate
+  - regularization_constant
 int_params:
   - num_episodes
   - buffer_size
   - num_shuffles
   - max_time_steps
   - batch_size
+  - embed_dim
+  - num_filters
+  - num_conv_layers
+  - kernel_size
+  - fc_dim
+  - num_dense_layers

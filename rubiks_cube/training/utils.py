@@ -6,6 +6,8 @@ import yaml
 import warnings
 import tensorflow as tf
 
+from rubiks_cube.agent.small_cnn import CNN
+
 def parse_config_file(config_file_path):
     '''
     parses a training config yaml file
@@ -79,3 +81,22 @@ def get_optimizer(name=None, **optimizer_kwargs):
         warnings.warn("Optimizer specified incorrectly, using default: tf.keras.optimizers.SGD() with default params")
         optimizer = tf.keras.optimizers.SGD()
     return optimizer
+
+
+def get_model(name=None, **model_kwargs):
+    '''
+    return a model with specified model parametes
+
+    Parameters:
+    -----------
+    name : str
+    model_kwargs : dict
+        init args for object of class tf.keras.Model
+    '''
+    model = None
+    if name == 'small_cnn':
+        model = CNN(**model_kwargs)
+    else:
+        warnings.warn("Optimizer specified incorrectly, using default: rubiks_cube.agent.small_cnn.CNN with default params")
+        model = CNN()
+    return model

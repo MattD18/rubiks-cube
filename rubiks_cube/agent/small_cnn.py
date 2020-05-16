@@ -36,7 +36,7 @@ class CNN(tf.keras.Model):
                  num_filters=20,
                  num_conv_layers=1,
                  kernel_size=2,
-                 fc_dim = 50,
+                 fc_dim= 50,
                  regularization_constant=0.0,
                  num_dense_layers=1,
                  dense_activation='elu',

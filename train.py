@@ -5,7 +5,7 @@ import argparse
 import tensorflow as tf
 
 from rubiks_cube.training.experience_replay import train_via_experience_replay
-from rubiks_cube.training.utils import parse_config_file, get_optimizer
+from rubiks_cube.training.utils import parse_config_file, get_optimizer, get_model
 from rubiks_cube.agent.small_cnn import CNN
 
 parser = argparse.ArgumentParser()
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     
 
     # load model
-    model = CNN()
+    model = get_model(**config['model']['params'])
     # use squared loss
     loss_object = tf.keras.losses.MeanSquaredError()
     # load optimizer per config file
@@ -35,6 +35,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Training got interrupted")
 
-    #add model saving/config system
-    # config helpers
+    #add model saving
+    # model config/ exploration rate class
     #gpu/ container
+    #MCTS
