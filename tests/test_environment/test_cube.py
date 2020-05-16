@@ -4,23 +4,23 @@ import random
 
 import numpy as np
 
-from rubiks_cube.environment import cube
+from rubiks_cube.environment.cube import Cube
 
 
 def test_cube_init():
-    c = cube.Cube()
+    c = Cube()
     assert (c.state == np.arange(0, 27).reshape(3, 3, 3)).all()
 
 
 def test_cube_rotation():
-    c = cube.Cube()
+    c = Cube()
     for rotation in c.func_list:
         rotation()
     assert (c.state == np.arange(0, 27).reshape(3, 3, 3)).all()
 
 def test_cube_shuffle():
     random.seed(5)
-    c = cube.Cube()
+    c = Cube()
     c.shuffle(4)
     shuffled_state = np.array([[
         [ 0,  1,  2],
@@ -38,8 +38,8 @@ def test_cube_shuffle():
     assert (c.state == shuffled_state).all()
 
 def test_cube_equal():
-    c1 = cube.Cube()
-    c2 = cube.Cube()
+    c1 = Cube()
+    c2 = Cube()
     c2.back()
     c2.back_p()
     assert c1 == c2
