@@ -2,7 +2,6 @@
 Algorithm 1 of https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf
 '''
 import os
-import datetime
 
 import numpy as np
 import tensorflow as tf
@@ -37,8 +36,6 @@ def train_via_experience_replay(model, loss_object, optimizer,
     '''
     #set up training performance variables
     if logging:
-        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        train_log_dir = os.path.join(train_log_dir, current_time)
         train_summary_writer = tf.summary.create_file_writer(train_log_dir)
         validation_cubes = get_validation_cubes() # TODO: get training num_shuffles
 

@@ -1,6 +1,7 @@
 
 import os
 import argparse
+import datetime
 
 import tensorflow as tf
 
@@ -19,6 +20,10 @@ if __name__ == "__main__":
     config = parse_config_file(config_path)
     config_name = os.path.split(config_path)[-1].replace('.yaml','')
     
+    #Set up training directories
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    train_log_dir= os.path.join('logs/training/gradient_tape', config_name, current_time)
+    model_weights_dir = os.path.join('logs/training/model_weights', config_name, current_time, current_time)
 
     # load model
     model = get_model(**config['model']['params'])
@@ -29,13 +34,14 @@ if __name__ == "__main__":
 
     try:
         # Train the model
-        train_log_dir= os.path.join('logs/training/gradient_tape', config_name)
         train_via_experience_replay(model, loss_object, optimizer, 
                                     logging=True, train_log_dir=train_log_dir,  **config['training_loop']['params'])
     except KeyboardInterrupt:
         print("Training got interrupted")
 
-    #add model saving
-    # model config/ exploration rate class
+    # Save trained model weights
+    model.save_weights(model_weights_dir, save_format='tf')
+
+    #  exploration rate class
     #gpu/ container
     #MCTS
