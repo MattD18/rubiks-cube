@@ -40,7 +40,7 @@ def train_via_experience_replay(model, loss_object, optimizer,
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         train_log_dir = os.path.join(train_log_dir, current_time)
         train_summary_writer = tf.summary.create_file_writer(train_log_dir)
-        validation_cubes = get_validation_cubes()
+        validation_cubes = get_validation_cubes() # TODO: get training num_shuffles
 
     print("Training model")
     rb = ReplayBuffer(buffer_size=buffer_size)
@@ -54,7 +54,7 @@ def train_via_experience_replay(model, loss_object, optimizer,
             # perform validation assessments and write results
             if (episode % logging_freq) == 0:
                 avg_max_q = get_val_avg_max_q(model, validation_cubes)
-                val_acc = get_val_acc(model, validation_cubes, **episode_kwargs) #episode kwargs just for max_time_steps
+                val_acc = get_val_acc(model, validation_cubes) # TODO: get training max time steps
                 with train_summary_writer.as_default():
                     tf.summary.scalar('avg_max_q', avg_max_q, step=episode)
                     tf.summary.scalar('val_acc', val_acc, step=episode)
@@ -248,7 +248,7 @@ def get_val_avg_max_q(model, validation_cubes):
     ])
     return avg_max_q
 
-def get_validation_cubes(val_shuffles=3, validation_count=100):
+def get_validation_cubes(val_shuffles=1, validation_count=100):
     '''
     Get set of validation cubes that will remain consistent over training period
 
