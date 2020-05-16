@@ -1,0 +1,15 @@
+# Training Test Params
+training_loop:
+  params:
+    num_epochs: 10
+    batch_size: 8
+optimizer:
+  params:
+    name: Adam
+    learning_rate: .00001
+# Float Params
+float_params:
+  - learning_rate
+int_params:
+  - num_epochs
+  - batch_size

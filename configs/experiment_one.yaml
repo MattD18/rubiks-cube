@@ -1,0 +1,23 @@
+# Training Test Params
+training_loop:
+  params:
+    num_episodes : 100
+    buffer_size : 128
+    num_shuffles : 3
+    max_time_steps : 5
+    exploration_rate : .1
+    batch_size : 16
+optimizer:
+  params:
+    name: Adam
+    learning_rate: .00001
+# Float Params
+float_params:
+  - learning_rate
+  - exploration_rate
+int_params:
+  - num_episodes
+  - buffer_size
+  - num_shuffles
+  - max_time_steps
+  - batch_size
