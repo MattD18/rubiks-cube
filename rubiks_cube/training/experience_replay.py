@@ -13,6 +13,8 @@ from rubiks_cube.inference.greedy import greedy_solve
 def train_via_experience_replay(model, loss_object, optimizer, 
                                 num_episodes=20, 
                                 buffer_size=128,
+                                val_num_shuffles=3,
+                                val_max_time_steps=5,
                                 train_log_dir='logs/training/gradient_tape',
                                 logging=False,
                                 logging_freq=5,
@@ -29,6 +31,8 @@ def train_via_experience_replay(model, loss_object, optimizer,
     optimizer : tf.keras.optimizer
     num_episodes : int
     buffer_size : int
+    val_num_shuffles : int
+    val_max_time_steps : int
     train_log_dir : str
     logging : boolean
     logging_freq : int
@@ -37,7 +41,8 @@ def train_via_experience_replay(model, loss_object, optimizer,
     #set up training performance variables
     if logging:
         train_summary_writer = tf.summary.create_file_writer(train_log_dir)
-        validation_cubes = get_validation_cubes() # TODO: get training num_shuffles
+
+        validation_cubes = get_validation_cubes(val_num_shuffles)
 
     print("Training model")
     rb = ReplayBuffer(buffer_size=buffer_size)
@@ -51,7 +56,7 @@ def train_via_experience_replay(model, loss_object, optimizer,
             # perform validation assessments and write results
             if (episode % logging_freq) == 0:
                 avg_max_q = get_val_avg_max_q(model, validation_cubes)
-                val_acc = get_val_acc(model, validation_cubes) # TODO: get training max time steps
+                val_acc = get_val_acc(model, validation_cubes, val_max_time_steps)
                 with train_summary_writer.as_default():
                     tf.summary.scalar('avg_max_q', avg_max_q, step=episode)
                     tf.summary.scalar('val_acc', val_acc, step=episode)
@@ -197,7 +202,7 @@ def unpack_minibatch(minibatch):
     return states, actions, rewards, next_states
 
 
-def get_val_acc(model, validation_cubes, max_time_steps=5):
+def get_val_acc(model, validation_cubes, val_max_time_steps=5):
     '''
     Assess training progress on ability to solve validation cubes
 
@@ -206,7 +211,7 @@ def get_val_acc(model, validation_cubes, max_time_steps=5):
     model : tf.keras.Model
     validation_cubes : list
         list of rubiks_cube.environment.cube.Cube() objects
-    max_time_steps : int
+    val_max_time_steps : int
     Returns:
     ----------
     val_acc : float
@@ -215,7 +220,7 @@ def get_val_acc(model, validation_cubes, max_time_steps=5):
     for val_cube in validation_cubes:
         val_cube_trial = Cube()
         val_cube_trial.state = np.copy(val_cube.state)
-        solve_count += greedy_solve(model, val_cube_trial, max_time_steps)[0]
+        solve_count += greedy_solve(model, val_cube_trial, val_max_time_steps)[0]
     return solve_count / len(validation_cubes)
   
 
@@ -245,13 +250,13 @@ def get_val_avg_max_q(model, validation_cubes):
     ])
     return avg_max_q
 
-def get_validation_cubes(val_shuffles=1, validation_count=100):
+def get_validation_cubes(val_num_shuffles=1, validation_count=100):
     '''
     Get set of validation cubes that will remain consistent over training period
 
     Parameters:
     ------------
-    val_shuffles : int
+    val_num_shuffles : int
         number of times validation cube is shuffled
     validation_count : int
         number of validation cubes
@@ -264,6 +269,7 @@ def get_validation_cubes(val_shuffles=1, validation_count=100):
     validation_cubes = []
     for i in range(validation_count):
         val_cube = Cube()
-        val_cube.shuffle(val_shuffles)
+        val_cube.shuffle(val_num_shuffles)
         validation_cubes.append(val_cube)
     return validation_cubes
+    

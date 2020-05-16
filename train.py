@@ -35,7 +35,7 @@ if __name__ == "__main__":
     try:
         # Train the model
         train_via_experience_replay(model, loss_object, optimizer, 
-                                    logging=True, train_log_dir=train_log_dir,  **config['training_loop']['params'])
+                                    logging=True, train_log_dir=train_log_dir, **config['training_loop']['params'])
     except KeyboardInterrupt:
         print("Training got interrupted")
 

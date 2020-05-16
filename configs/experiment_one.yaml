@@ -7,6 +7,8 @@ training_loop:
     max_time_steps : 5
     exploration_rate : .1
     batch_size : 16
+    val_num_shuffles : 1
+    val_max_time_steps : 5
 optimizer:
   params:
     name: Adam
@@ -40,3 +42,5 @@ int_params:
   - kernel_size
   - fc_dim
   - num_dense_layers
+  - val_num_shuffles 
+  - val_max_time_steps
