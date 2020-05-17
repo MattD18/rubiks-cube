@@ -45,6 +45,5 @@ if __name__ == "__main__":
     # Save trained model weights
     model.save_weights(model_weights_dir, save_format='tf')
 
-    # exploration rate class
     # module MCTS
     #gpu/ container

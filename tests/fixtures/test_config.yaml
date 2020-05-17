@@ -1,15 +1,52 @@
 # Training Test Params
 training_loop:
   params:
-    num_epochs: 10
-    batch_size: 8
+    num_episodes : 100
+    buffer_size : 128
+    num_shuffles : 3
+    max_time_steps : 5
+    batch_size : 16
+    val_num_shuffles : 1
+    val_max_time_steps : 5
 optimizer:
   params:
     name: Adam
     learning_rate: .00001
+model:
+  params:
+    name: small_cnn
+    embed_dim : 50
+    num_filters : 20
+    num_conv_layers : 1
+    kernel_size : 2
+    fc_dim : 50
+    regularization_constant : 0.0
+    num_dense_layers : 1
+    dense_activation : elu
+    conv_activation : elu
+exploration_rate:
+  params:
+    method : linear
+    cutoff_rate : .2
+    cutoff_episode : 20
 # Float Params
 float_params:
   - learning_rate
+  - exploration_rate
+  - regularization_constant
+  - cutoff_rate
 int_params:
-  - num_epochs
+  - num_episodes
+  - buffer_size
+  - num_shuffles
+  - max_time_steps
   - batch_size
+  - embed_dim
+  - num_filters
+  - num_conv_layers
+  - kernel_size
+  - fc_dim
+  - num_dense_layers
+  - val_num_shuffles 
+  - val_max_time_steps
+  - cutoff_episode
