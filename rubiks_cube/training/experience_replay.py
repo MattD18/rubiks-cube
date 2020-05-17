@@ -10,7 +10,7 @@ from rubiks_cube.environment.cube import Cube
 from rubiks_cube.agent.replay_buffer import ReplayBuffer
 from rubiks_cube.inference.greedy import greedy_solve
 
-def train_via_experience_replay(model, loss_object, optimizer, 
+def train_via_experience_replay(model, loss_object, optimizer, exploration_rate_scheduler,
                                 num_episodes=20, 
                                 buffer_size=128,
                                 val_num_shuffles=3,
@@ -29,6 +29,7 @@ def train_via_experience_replay(model, loss_object, optimizer,
     model : tf.keras.Model
     loss_object : tf.keras.losses
     optimizer : tf.keras.optimizer
+    exploration_rate_scheduler : rubiks_cube.training.exploration_rate.ExplorationRateSchedule
     num_episodes : int
     buffer_size : int
     val_num_shuffles : int
@@ -48,7 +49,8 @@ def train_via_experience_replay(model, loss_object, optimizer,
     rb = ReplayBuffer(buffer_size=buffer_size)
     for episode in range(num_episodes):
         print(f"Episode: {episode}")
-        _, episode_loss = play_episode(model, loss_object, optimizer, rb, **episode_kwargs)
+        episode_exploration_rate = exploration_rate_scheduler.get_rate(episode)
+        _, episode_loss = play_episode(model, loss_object, optimizer, rb, exploration_rate=episode_exploration_rate, **episode_kwargs)
         if logging:
             # write training loss
             with train_summary_writer.as_default():
