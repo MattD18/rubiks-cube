@@ -5,7 +5,7 @@ astroid==2.4.0
 attrs==19.1.0
 awscli==1.16.298
 backcall==0.1.0
-bleach==3.1.0
+bleach==3.1.4
 certifi==2020.4.5.1
 Click==7.0
 colorama==0.4.1
