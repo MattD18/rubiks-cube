@@ -1,0 +1,57 @@
+# Training Test Params
+training_loop:
+  params:
+    num_episodes : 10000
+    buffer_size : 128
+    num_shuffles : 5
+    max_time_steps : 9
+    batch_size : 16
+    discount_factor : .9
+    val_num_shuffles : 5
+    val_max_time_steps : 9
+    val_solve_method : greedy
+    logging_freq : 500
+optimizer:
+  params:
+    name: Adam
+    learning_rate: .0001
+model:
+  params:
+    name: small_cnn
+    embed_dim : 256
+    num_filters : 50
+    num_conv_layers : 3
+    kernel_size : 2
+    fc_dim : 128
+    regularization_constant : 0.05
+    num_dense_layers : 2
+    dense_activation : elu
+    conv_activation : elu
+exploration_rate:
+  params:
+    method : linear
+    cutoff_rate : .1
+    cutoff_episode : 1000
+# Float Params
+float_params:
+  - learning_rate
+  - exploration_rate
+  - regularization_constant
+  - cutoff_rate
+  - discount_factor
+int_params:
+  - num_episodes
+  - buffer_size
+  - num_shuffles
+  - max_time_steps
+  - batch_size
+  - embed_dim
+  - num_filters
+  - num_conv_layers
+  - kernel_size
+  - fc_dim
+  - num_dense_layers
+  - val_num_shuffles 
+  - val_max_time_steps
+  - cutoff_episode
+  - logging_freq
