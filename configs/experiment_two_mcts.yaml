@@ -3,25 +3,29 @@ training_loop:
   params:
     num_episodes : 1000
     buffer_size : 128
-    num_shuffles : 1
-    max_time_steps : 3
+    num_shuffles : 3
+    max_time_steps : 7
     batch_size : 16
-    val_num_shuffles : 1
-    val_max_time_steps : 3
-    logging_freq : 50
+    discount_factor : .9
+    val_num_shuffles : 3
+    val_max_time_steps : 7
+    val_solve_method : mcts
+    mcts_num_search : 20
+    val_num_cubes : 20
+    logging_freq : 100
 optimizer:
   params:
     name: Adam
-    learning_rate: .001
+    learning_rate: .0001
 model:
   params:
     name: small_cnn
-    embed_dim : 50
-    num_filters : 20
-    num_conv_layers : 1
+    embed_dim : 100
+    num_filters : 50
+    num_conv_layers : 3
     kernel_size : 2
     fc_dim : 50
-    regularization_constant : 0.0
+    regularization_constant : 0.05
     num_dense_layers : 1
     dense_activation : elu
     conv_activation : elu
@@ -36,6 +40,7 @@ float_params:
   - exploration_rate
   - regularization_constant
   - cutoff_rate
+  - discount_factor
 int_params:
   - num_episodes
   - buffer_size
@@ -52,3 +57,5 @@ int_params:
   - val_max_time_steps
   - cutoff_episode
   - logging_freq
+  - mcts_num_search
+  - val_num_cubes

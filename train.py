@@ -9,6 +9,7 @@ from rubiks_cube.training.experience_replay import train_via_experience_replay
 from rubiks_cube.training.utils import parse_config_file, get_optimizer, get_model
 from rubiks_cube.training.exploration_rate import ExplorationRateSchedule
 from rubiks_cube.agent.small_cnn import CNN
+from rubiks_cube.environment.cube import Cube
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config_path', type=str, help='path to config yaml file')
@@ -41,9 +42,20 @@ if __name__ == "__main__":
                                     logging=True, train_log_dir=train_log_dir, **config['training_loop']['params'])
     except KeyboardInterrupt:
         print("Training got interrupted")
+        #save weights as a fail safe
+
+
+        save_state = Cube().state
+        save_state_tensor = tf.expand_dims(tf.convert_to_tensor(save_state), 0)
+        model.predict(save_state_tensor)
+        model.save(model_weights_dir)
 
     # Save trained model weights
-    model.save_weights(model_weights_dir, save_format='tf')
+    save_state = Cube().state
+    save_state_tensor = tf.expand_dims(tf.convert_to_tensor(save_state), 0)
+    model.predict(save_state_tensor)
+    model.save(model_weights_dir)
+    
 
     # module MCTS
     #gpu/ container

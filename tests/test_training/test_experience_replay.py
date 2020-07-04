@@ -115,6 +115,31 @@ def test_get_val_acc():
     val_acc = get_val_acc(model, validation_cubes, val_max_time_steps=5)
     assert type(val_acc) is float
 
+def test_get_val_acc_keep_weights_greedy():
+    validation_cubes = get_validation_cubes(2)
+    model = CNN()
+    model.build(input_shape=tf.TensorShape([1, 3, 3, 3]))
+    before_update_vars = [tf.identity(var) for var in model.trainable_variables]
+    val_acc = get_val_acc(model, validation_cubes, val_max_time_steps=5, val_solve_method='greedy')
+    after_update_vars = model.trainable_variables   
+    for (b,a) in zip(before_update_vars, after_update_vars):
+        assert (a == b).numpy().all()
+
+def test_get_val_acc_keep_weights_mcts():
+    validation_cubes = get_validation_cubes(2, validation_count=2)
+    model = CNN()
+    model.build(input_shape=tf.TensorShape([1, 3, 3, 3]))
+    before_update_vars = [tf.identity(var) for var in model.trainable_variables]
+    val_acc = get_val_acc(model, validation_cubes, val_max_time_steps=5, val_solve_method='mcts', mcts_num_search=1)
+    after_update_vars = model.trainable_variables   
+    for (b,a) in zip(before_update_vars, after_update_vars):
+        assert (a == b).numpy().all()
+
+    
+    
+
+                
+
 if __name__ == "__main__":
     test_train_via_experience_replay_change_weights()
    

@@ -37,7 +37,7 @@ def greedy_solve(model, shuffled_cube, max_time_steps, verbose=False):
     st = tf.expand_dims(tf.convert_to_tensor(s0), 0) # (1, 3, 3, 3)
     # at each step takes argmax_a Q(a,s)
     for t in range(max_time_steps):
-        at_index = tf.math.argmax(model(st), 1).numpy()[0]
+        at_index = tf.math.argmax(model(st, training=False), 1).numpy()[0]
         at = shuffled_cube.func_list[at_index]
         solver_steps.append(at.__name__)
         if verbose:
