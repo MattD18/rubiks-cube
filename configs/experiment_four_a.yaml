@@ -1,16 +1,17 @@
 # Training Test Params
 training_loop:
   params:
-    num_episodes : 10000
+    num_episodes : 100
     buffer_size : 128
     num_shuffles : 5
     max_time_steps : 9
     batch_size : 16
     discount_factor : .9
-    val_num_shuffles : 5
-    val_max_time_steps : 9
+    autodidactic : True
+    val_num_shuffles : 1
+    val_max_time_steps : 5
     val_solve_method : greedy
-    logging_freq : 500
+    logging_freq : 10
 optimizer:
   params:
     name: Adam
@@ -18,9 +19,9 @@ optimizer:
 model:
   params:
     name: small_cnn
-    embed_dim : 256
+    embed_dim : 100
     num_filters : 50
-    num_conv_layers : 3
+    num_conv_layers : 1
     kernel_size : 2
     fc_dim : 128
     regularization_constant : 0.05

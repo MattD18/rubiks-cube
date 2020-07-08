@@ -2,6 +2,7 @@
 Algorithm 1 of https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf
 '''
 import os
+import copy
 
 import numpy as np
 import tensorflow as tf
@@ -19,6 +20,7 @@ def train_via_experience_replay(model, loss_object, optimizer, exploration_rate_
                                 val_solve_method='greedy',
                                 val_num_cubes=100,
                                 mcts_num_search=10,
+                                autodidactic=False,
                                 train_log_dir='logs/training/gradient_tape',
                                 logging=False,
                                 logging_freq=100,
@@ -41,6 +43,7 @@ def train_via_experience_replay(model, loss_object, optimizer, exploration_rate_
     val_solve_method : str
     val_num_cubes : int
     mcts_num_search : int
+    autodidactic : boolean
     train_log_dir : str
     logging : boolean
     logging_freq : int
@@ -58,7 +61,10 @@ def train_via_experience_replay(model, loss_object, optimizer, exploration_rate_
         # get episode specific exploration rate
         episode_exploration_rate = exploration_rate_scheduler.get_rate(episode)
         # play episode
-        _, episode_loss = play_episode(model, loss_object, optimizer, rb, exploration_rate=episode_exploration_rate, **episode_kwargs)
+        if bool(autodidactic):
+            _, episode_loss = play_autodidactic_episode(model, loss_object, optimizer, rb, exploration_rate=episode_exploration_rate, **episode_kwargs)
+        else:
+            _, episode_loss = play_episode(model, loss_object, optimizer, rb, exploration_rate=episode_exploration_rate, **episode_kwargs)
         if logging:
             # write training loss
             with train_summary_writer.as_default():
@@ -108,7 +114,7 @@ def play_episode(model, loss_object, optimizer, replay_buffer,
     s0 = cube.shuffle(num_shuffles)
     # convert cube state into tensor to feed into model
     st = tf.expand_dims(tf.convert_to_tensor(s0), 0) # (1, 3, 3, 3)
-    #Play episode until solved or max_time_steps is reached
+    # Play episode until solved or max_time_steps is reached
     for t in range(max_time_steps):
         #with some probability select a random action a_t
         if np.random.rand() < exploration_rate:
@@ -141,6 +147,87 @@ def play_episode(model, loss_object, optimizer, replay_buffer,
     episode_loss_result = episode_loss.result()
     episode_loss.reset_states()
     return cube, episode_loss_result
+
+def play_autodidactic_episode(model, loss_object, optimizer, replay_buffer, 
+                    num_shuffles=5, 
+                    max_time_steps=10, 
+                    exploration_rate=.1, 
+                    end_state_reward=1.0, 
+                    batch_size=16, 
+                    discount_factor=.9,
+                    training=True):
+    '''
+    In a single episode, cube is shuffled up to num_shuffle times, however agent tries to solve cube at every shuffle
+    and has 2 x current number of shuffles + 1 to solve
+
+    Parameters:
+    ------------
+    model : tf.keras.Model
+    loss_object : tf.keras.losses
+    optimizer : tf.keras.optimizer
+    replay_buffer : rubiks_cube.agent.replay_buffer.ReplayBuffer
+    num_shuffles : int (>= 0)
+    max_time_steps : int (>= 1)
+    exploration_rate : float [0, 1]
+    end_state_reward: float
+    batch_size : int (>= 1)
+    discount_factor: float
+    training : boolean
+    '''
+    #Initialize episode cube
+    episode_cube = Cube()
+    #Initialize episode loss
+    episode_loss = tf.keras.metrics.Mean()
+    # Initialize solved cube
+    solved_cube = Cube()
+    for shuffle_step in range(num_shuffles):
+        # Initialze shuffle step cube state
+        episode_cube.shuffle(1)
+        shuffle_step_cube = Cube()
+        shuffle_step_cube.state = copy.deepcopy(episode_cube.state)
+        #Set up training shuffle_step loss
+        shuffle_step_loss = tf.keras.metrics.Mean()
+        # regular training loop
+        s0 = shuffle_step_cube.state
+        # convert cube state into tensor to feed into model
+        st = tf.expand_dims(tf.convert_to_tensor(s0), 0) # (1, 3, 3, 3)
+        # Play shuffle_step until solved or shuffle_max_time_steps is reached
+        shuffle_max_time_steps = 2*shuffle_step + 1
+        for t in range(shuffle_max_time_steps):
+            #with some probability select a random action a_t
+            if np.random.rand() < exploration_rate:
+                at_index = np.random.randint(0, 12) #WARNING: Number of possible otations
+            #otherwise select a_t = max_a Q(s_t,a)
+            else:
+                at_index = tf.math.argmax(model(st), 1).numpy()[0]
+            # Execute action a_t and observe state s_t+1 and reward r_t
+            at = shuffle_step_cube.func_list[at_index]
+            st1 = at()
+            if shuffle_step_cube == solved_cube:
+                rt = end_state_reward
+            else:
+                rt = 0.
+            # Store transition in replay buffer, convert state to numpy for convenience
+            st_numpy = st.numpy()[0] # (3, 3, 3)
+            transition = (st_numpy, at_index, rt, st1) # (np.array, int, float, np.array)
+            replay_buffer.add(transition)
+            #if training is enabled, update q function
+            if training:
+                loss = update_q_function(model, loss_object, optimizer, replay_buffer, end_state_reward, batch_size, discount_factor)
+            else:
+                loss = 0
+            shuffle_step_loss(loss)
+            #if reward state has been reached, stop shuffle_step early
+            if (rt == end_state_reward):
+                break
+            # convert next cube state into tensor to feed into model
+            st = tf.expand_dims(tf.convert_to_tensor(st1), 0) # (1, 3, 3, 3)
+        shuffle_step_loss_result = shuffle_step_loss.result()
+        episode_loss(shuffle_step_loss_result )
+        shuffle_step_loss.reset_states()
+    episode_loss_result = episode_loss.result()
+    episode_loss.reset_states()
+    return episode_cube, episode_loss_result
 
 def update_q_function(model, loss_object, optimizer, replay_buffer, end_state_reward, batch_size=16, discount_factor=.9):
     '''

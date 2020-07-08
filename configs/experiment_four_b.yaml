@@ -3,12 +3,13 @@ training_loop:
   params:
     num_episodes : 10000
     buffer_size : 128
-    num_shuffles : 5
+    num_shuffles : 10
     max_time_steps : 9
     batch_size : 16
     discount_factor : .9
+    autodidactic : True
     val_num_shuffles : 5
-    val_max_time_steps : 9
+    val_max_time_steps : 11
     val_solve_method : greedy
     logging_freq : 500
 optimizer:
