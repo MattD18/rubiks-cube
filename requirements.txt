@@ -2,4 +2,4 @@ numpy==1.17.2
 PyYAML==5.1.2
 -e git+https://github.com/MattD18/rubix-cube.git@a1f5aa55977ce778532b84de7011ffa748b3306d#egg=rubiks_cube
 tensorboard==2.0.0
-tensorflow==2.0.1
+tensorflow==2.0.3
